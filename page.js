@@ -185,7 +185,7 @@ function getTodaysDate(el) {
 
 function checkUsers() {
     $('#add-item').find('input[name=users]').attr('required', true);
-    if ($('#add-item').find('input[name=users]:checked')) {
+    if ($('#add-item').find('input[name=users]:checked').length > 0) {
         $('#add-item').find('input[name=users]').attr('required', false);
     }
 }
