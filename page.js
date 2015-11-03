@@ -95,15 +95,14 @@ $(function () {
 
         $('#errorlog').empty();
 
-        if (itemText !== '' && itemAmount !== '') {
-            ItemTable.insert({ date: datum, amount: itemAmount, text: itemText, users: JSON.stringify(us) }).then(
-                function () {
-                    items = null;
-                    refreshForm();
-                    $('#summary').html('<strong style="color:green">De boodschap is opgeslagen</strong>').show();
-                }
-            , handleError);
-        }
+        ItemTable.insert({ date: datum, amount: itemAmount, text: itemText, users: JSON.stringify(us) }).then(
+            function () {
+                items = null;
+                refreshForm();
+                $('#summary').html('<strong style="color:green">De boodschap is opgeslagen</strong>').show();
+            }
+        , handleError);
+
         datebox.focus();
         evt.preventDefault();
     });
@@ -185,7 +184,10 @@ function getTodaysDate(el) {
 
 function checkUsers() {
     $('#add-item').find('input[name=users]').attr('required', true);
-    if ($('#add-item').find('input[name=users]:checked').length > 0) {
-        $('#add-item').find('input[name=users]').attr('required', false);
-    }
+    $('#add-item').find('input[name=users]:checked').each(function(item) {
+        if (item.value != sessionStorage.loggedInUser) {
+            $('#add-item').find('input[name=users]').attr('required', false);
+            return;
+        }
+    });
 }
