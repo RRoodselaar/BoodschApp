@@ -90,13 +90,13 @@ function persist(item) {
     stash.set(boodschappen, r);
     console.log('boodschappen: '+JSON.stringify(r));
     ItemTable.insert(item).then(
-        function () {
+        function (item) {
             items = null;   // delete cached transaction history
-            refreshForm();
-            r.pop();
-            stash.set(boodschappen, r);
+            r.splice(r.indexOf(item), 1);
             console.log('boodschappen: '+JSON.stringify(r));
+            //stash.set(boodschappen, r);
             $('#summary').html('<strong style="color:green">De boodschap is opgeslagen</strong>').show();
+            refreshForm();
         }
     , handleError);
 }
@@ -219,16 +219,15 @@ function handleError(error) {
 
 function persistCachedItems() {
     var r = stash.get(boodschappen);
+    console.log('boodschappen: '+JSON.stringify(r));
     if (r) {
-        for (var i = 0; i < r.length; i++) {
-            ItemTable.insert(r[i]).then(function () {
-                items = null;   // delete cached transaction history
-                refreshForm();
-                r.pop();
-                stash.set(boodschappen, r);
-                console.log('boodschappen: '+JSON.stringify(r));
-                $('#summary').html('<strong style="color:green">De boodschap is opgeslagen</strong>').show();
-             }, handleError);
-        }
+        ItemTable.insert(r.pop()).then(function () {
+            stash.set(boodschappen, r);
+            console.log('boodschappen: '+JSON.stringify(r));
+            items = null;   // delete cached transaction history
+            $('#summary').html('<strong style="color:green">De boodschap is opgeslagen</strong>').show();
+            if (r.length > 0) persistCachedItems();
+            else refreshForm();
+         }, handleError);
     }
 }
