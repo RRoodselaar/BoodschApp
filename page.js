@@ -1,7 +1,10 @@
+// refresh browser after update to start using downloaded version
+window.applicationCache.addEventListener('updateready', location.reload, false);
+
 function fillTransactions(el) {
     var uId = $(el).attr('id');
     var sum = 0.0;
-    var totItems = [].concat(items);
+    var totItems = (items ? items.slice(0) : []);
     
     // add cached items;
     var r = stash.get(boodschappen);
@@ -12,11 +15,11 @@ function fillTransactions(el) {
         totItems.unshift(item);            
     });
     
-    var row = $.map(totItems, function(item) {
+    if (totItems) var row = $.map(totItems, function(item) {
         var amount = 0.0;
         var color = (!item.id ? 'mistyrose' : 'none');
-        if (item.userId == uId) amount += item.amount;
-        if (item.users.indexOf(uId) > -1) amount -= item.amount / item.users.split(',').length;
+        if (item.userId == uId) amount += parseFloat(item.amount);
+        if (item.users.indexOf(uId) > -1) amount -= parseFloat(item.amount) / item.users.split(',').length;
         if (amount != 0) {
             sum += amount;
             return $('<li>').css('background', color)
@@ -36,10 +39,11 @@ function fillTransactions(el) {
         .append(row).append(totalrow));
 }    
 
-var items;
+var items = stash.get('items');
 function getTransactions(el) {
-    if (!items) ItemTable.orderByDescending('date').read().then( function (t) {
-        items=t;            
+    if (!items && navigator.onLine) ItemTable.orderByDescending('date').read().then( function (t) {
+        items=t;
+        stash.set('items', items);
         fillTransactions(el);
     }, handleError);
     else fillTransactions(el);
@@ -47,7 +51,8 @@ function getTransactions(el) {
 
 function refreshTotals() {
     //*
-    userTable.read().then(function (users) {
+    if (!users) users = stash.get('users');
+    if (users) {
         var listItems = $.map(users, function (user) {
             return $('<li>').attr('id', user.id).css('cursor', 'pointer')
                 .on('click', function(){ getTransactions(this); })
@@ -55,7 +60,7 @@ function refreshTotals() {
                 .append($('<div>').css('float', 'right').append("&euro; " + user.total.toFixed(2)));
         });
         $('#todo-items').empty().append(listItems).toggle(listItems.length > 0);
-    }, handleError);
+    }
     /**/
     /*
     userTable.read().then(function (users) {
@@ -82,23 +87,47 @@ function compare(users, items) {
     $('#todo-items').empty().append(us).toggle(us.length > 0);
 */}
 
-var boodschappen = 'boodschappen';
+var boodschappen = 'boodschappen';  // name stash store (renamed after login)
+
+function persistCachedItems() {
+    var r = stash.get(boodschappen);
+    if (r && navigator.onLine && r.length > 0) {
+        console.log('boodschappen: '+JSON.stringify(r));
+        ItemTable.insert(r.pop()).then(function () {
+            stash.set(boodschappen, r);
+            console.log('boodschappen: '+JSON.stringify(r));
+            items = null;   // delete cached transaction history
+            stash.cut('items');
+            $('#summary').html('<strong style="color:green">De boodschap is opgeslagen</strong>').show();
+            if (r.length > 0) persistCachedItems();
+            else {
+                resetForm();
+            }
+         }, handleError);
+    }
+}
+
 function persist(item) {
     var r = stash.get(boodschappen);
     if (!r) r = [];
     r.push(item);
     stash.set(boodschappen, r);
+    persistCachedItems();
+    /*
     console.log('boodschappen: '+JSON.stringify(r));
-    ItemTable.insert(item).then(
+    if (navigator.onLine) ItemTable.insert(item).then(
         function (item) {
-            items = null;   // delete cached transaction history
             r.splice(r.indexOf(item), 1);
             console.log('boodschappen: '+JSON.stringify(r));
-            //stash.set(boodschappen, r);
+            stash.set(boodschappen, r);
+            items = null;   // delete cached transaction history
+            stash.cut('items');
             $('#summary').html('<strong style="color:green">De boodschap is opgeslagen</strong>').show();
-            refreshForm();
+            resetForm();
         }
     , handleError);
+    else resetForm();
+    */
 }
 
 // Handle insert
@@ -109,7 +138,7 @@ $('#add-item').submit(function (evt) {
     var textbox = $('#new-item-text'),
         itemText = textbox.val();
     var amountbox = $('#new-item-amount'),
-        itemAmount = amountbox.val();
+        itemAmount = parseFloat(amountbox.val());
     var us = []; $('#add-item').find("input[name='users']:checked").each(function () {
         us.push($(this).val());
     });
@@ -123,17 +152,30 @@ $('#add-item').submit(function (evt) {
     evt.preventDefault();
 });
 
+var users = stash.get('users');
+function getUsers() {
+    if (navigator.onLine) { // altijd opnieuw gebruikers ophalen, wanneer online
+        userTable.where({}).read().then(function (us) {
+            users = us;
+            stash.set('users', users);
+            resetForm();
+        }, handleError);
+    } else {
+        resetForm();
+    }
+}
+
 // On initial load, start by fetching the current data
 function refreshAuthDisplay() {
     // Log in
     if (sessionStorage.loggedInUser) {
         client.currentUser = JSON.parse(sessionStorage.loggedInUser);
         $("#logged-out").toggle(false);
-        refreshForm();
         
-        // gestashte boodschappen doorzetten
+        // rename stash store
         boodschappen = client.currentUser.userId;
-        persistCachedItems();
+        
+        getUsers();
     } else {
         var isLoggedIn = client.currentUser !== null;
         $("#logged-in").toggle(isLoggedIn);
@@ -144,16 +186,16 @@ function refreshAuthDisplay() {
             sessionStorage.loggedInUser = JSON.stringify(client.currentUser);
 
             // register user
-            userTable.insert({ id: client.currentUser.userId }).then(refreshForm, handleError);
-            //$("#login-name").text(client.currentUser.userId);            
+            userTable.insert({ id: client.currentUser.userId }).then(getUsers, handleError);
+            //$("#login-name").text(client.currentUser.userId);
         }
     }
 }
 
 function logIn() {
-    client.login("facebook").then(refreshAuthDisplay, function (error) {
+    client.login("facebook").then(refreshAuthDisplay, handleError/*function (error) {
         alert(error);
-    });
+    }*/);
 }
 
 function logOut() {
@@ -164,22 +206,18 @@ function logOut() {
     $('#summary').html('<strong>Log in om het boodschappenbedrag op te slaan</strong>').show();
 }
 
-function refreshForm() {
-    var query = userTable.where({});
-
-    query.read().then(function (users) {
-        var userList = $.map(users, function (user) {
-            var isMe = (user.id == client.currentUser.userId);
-            return $('<li>')
-                .append($('<label>')
-                .append($('<input type="checkbox" name="users" required />')
-                .attr('value', user.id)
-                .attr('checked', isMe)
-                .attr('onclick', 'checkUsers();'))
-                .append(user.name.split(' ')[0]));
-        });
-        $("#add-item").find("ul").empty().append(userList);
+function resetForm() {
+    var userList = $.map(users, function (user) {
+        var isMe = (user.id == client.currentUser.userId);
+        return $('<li>')
+            .append($('<label>')
+            .append($('<input type="checkbox" name="users" required />')
+            .attr('value', user.id)
+            .attr('checked', isMe)
+            .attr('onclick', 'checkUsers();'))
+            .append(user.name.split(' ')[0]));
     });
+    $("#add-item").find("ul").empty().append(userList);
 
     $('#summary').children().fadeOut(2000);
     $("#add-item").find("input, button").attr("disabled", false);
@@ -187,8 +225,23 @@ function refreshForm() {
     refreshTotals();
 }
 
+function updateIndicator() {
+	// Show a different icon based on offline/online
+    if(navigator.onLine) {
+        $('body').css('background-color', '#e0e0e0');
+        if (client.currentUser) persistCachedItems();
+    } else {
+        $('body').css('background-color', 'mistyrose');
+    }
+}
+
 // On page init, fetch the data and set up event handlers
 $(function () {
+    // Update the online status icon based on connectivity
+    window.addEventListener('online',  updateIndicator);
+    window.addEventListener('offline', updateIndicator);
+    updateIndicator();
+    
     $("#add-item").find("input, button").attr("disabled", true);
     $('#summary').html('<strong>Log in om het boodschappenbedrag op te slaan</strong>');
     $("#logged-out button").click(logIn);
@@ -214,20 +267,5 @@ function checkUsers() {
 function handleError(error) {
     var text = error + (error.request ? ' - ' + error.request.status : '');
     $('#errorlog').append($('<li>').text(text));
-    refreshForm();
-}
-
-function persistCachedItems() {
-    var r = stash.get(boodschappen);
-    if (r.length > 0) {
-        console.log('boodschappen: '+JSON.stringify(r));
-        ItemTable.insert(r.pop()).then(function () {
-            stash.set(boodschappen, r);
-            console.log('boodschappen: '+JSON.stringify(r));
-            items = null;   // delete cached transaction history
-            $('#summary').html('<strong style="color:green">De boodschap is opgeslagen</strong>').show();
-            if (r.length > 0) persistCachedItems();
-            else refreshForm();
-         }, handleError);
-    }
+    resetForm();
 }

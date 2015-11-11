@@ -31,7 +31,7 @@ function handleCacheEvent(e) {
 }
 
 function handleCacheError(e) {
-  alert('Error: Cache failed to update!');
+  console.error('Error: Cache failed to update!');
 };
 
 // Fired after the first cache of the manifest.
@@ -57,5 +57,5 @@ appCache.addEventListener('obsolete', handleCacheEvent, false);
 // Fired for each resource listed in the manifest as it is being fetched.
 appCache.addEventListener('progress', handleCacheEvent, false);
 
-// Fired when the manifest resources have been newly redownloaded.
+// Fired when the manifest resources have been newly downloaded.
 appCache.addEventListener('updateready', handleCacheEvent, false);
