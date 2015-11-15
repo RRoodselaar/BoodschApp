@@ -43,7 +43,7 @@ function fillTransactions(el) {
 
 var items = stash.get('items');
 function getTransactions(el) {
-    if (!items && navigator.onLine) ItemTable.orderByDescending('date').take(1000).read().then( function (t) {
+    if (!items && navigator.onLine) itemTable.orderByDescending('date').take(1000).read().then( function (t) {
         items=t;
         stash.set('items', items);
         fillTransactions(el);
@@ -66,7 +66,7 @@ function refreshTotals() {
     /**/
     /*
     userTable.read().then(function (users) {
-        ItemTable.read().then(function(items){
+        itemTable.read().then(function(items){
             compare(users, items);
         }, handleError);
     }, handleError);
@@ -96,7 +96,7 @@ function persistCachedItems() {
     if (navigator.onLine) {
         if (r && r.length > 0) {
             console.log('boodschappen: '+JSON.stringify(r));
-            ItemTable.insert(r.pop()).then(function () {
+            itemTable.insert(r.pop()).then(function () {
                 stash.set(boodschappen, r);
                 console.log('boodschappen: '+JSON.stringify(r));
                 items = null;   // delete cached transaction history
@@ -120,7 +120,7 @@ function persist(item) {
     stash.set(boodschappen, r);
     
     users.forEach(function(user){
-        if (user.id == item.userId) user.total += item.amount;
+        if (user.id == client.currentUser.userId) user.total += item.amount;
         if (item.users.indexOf(user.id) > -1) user.total -= item.amount / item.users.split(',').length;
     });
     
@@ -128,7 +128,7 @@ function persist(item) {
     
     /*
     console.log('boodschappen: '+JSON.stringify(r));
-    if (navigator.onLine) ItemTable.insert(item).then(
+    if (navigator.onLine) itemTable.insert(item).then(
         function (item) {
             r.splice(r.indexOf(item), 1);
             console.log('boodschappen: '+JSON.stringify(r));
@@ -245,11 +245,32 @@ function resetForm() {
     refreshTotals();
 }
 
+function checkStash() {
+    // is the stash up to date?
+    itemTable.take(0).includeTotalCount().read().then(function (results) {
+        if (items && items.length < results.totalCount) {
+            items = null;
+            stash.cut('items');
+            users = null;
+            stash.cut('users');
+        }
+    });
+    userTable.take(0).includeTotalCount().read().then(function (results) {
+        if (users && users.length < results.totalCount) {
+            users = null;
+            stash.cut('users');            
+        }
+    });
+}
+
 function updateIndicator() {
 	// based on offline/online
     if(navigator.onLine) {
         $('body').css('background-color', '#e0e0e0');
-        if (client.currentUser) persistCachedItems();
+        if (client.currentUser) {
+            checkStash();
+            setTimeout(persistCachedItems, 2000);
+        }
     } else {
         $('body').css('background-color', 'mistyrose');
     }
@@ -263,10 +284,15 @@ $(function () {
     updateIndicator();
     
     $("#add-item").find("input, button").attr("disabled", true);
-    $('#summary').html('<strong>Log in om het boodschappenbedrag op te slaan</strong>');
+    
     $("#logged-out button").click(logIn);
     $("#logged-in button").click(logOut);
+    
+    $('#summary').html('<strong>Log in om het boodschappenbedrag op te slaan</strong>');
+
     refreshAuthDisplay();
+    
+    checkStash();
 });
 
 function getTodaysDate(el) {
