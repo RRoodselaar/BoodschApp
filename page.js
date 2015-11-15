@@ -1,5 +1,7 @@
 // refresh browser after update to start using downloaded version
-window.applicationCache.addEventListener('updateready', location.reload, false);
+window.applicationCache.addEventListener('updateready', function() {
+    location.reload();
+}, false);
 
 function fillTransactions(el) {
     var uId = $(el).attr('id');
@@ -23,16 +25,16 @@ function fillTransactions(el) {
         if (amount != 0) {
             sum += amount;
             return $('<li>').css('background', color)
-                .append($('<div>').css('float','left').css('width','80px').append(item.date.getDate()+'-'+(item.date.getMonth()+1)+'-'+item.date.getFullYear()).css('text-align','right'))
-                .append($('<div>').css('float','left').css('width','auto').append(item.text))
-                .append($('<div>').css('float','right').css('width','80px').append("&euro; " + amount.toFixed(2)).css('text-align','right'));
+                .append($('<div style="float:left;width:90px;text-align:right" />').append(item.date.getDate()+'-'+(item.date.getMonth()+1)+'-'+item.date.getFullYear()))
+                .append($('<div style="float:left;width:auto" />').append(item.text))
+                .append($('<div class="currency" style="float:right;width:80px" />').append(amount.toFixed(2)));
         }
     });
     var totalrow = "";
     if (sum != 0) totalrow = $('<li>').css('font-weight','bold')
-        .append($('<div>').css('float','left').css('width','80px').append('&nbsp;'))
-        .append($('<div>').css('float','left').css('width','auto').append('totaal'))
-        .append($('<div>').css('float','right').css('width','80px').append("&euro; " + sum.toFixed(2)).css('text-align','right'));
+        .append($('<div style="float:left;width:90px" />').append('&nbsp;'))
+        .append($('<div style="float:left;width:auto" />').append('totaal'))
+        .append($('<div class="currency" style="float:right;width:80px" />').append(sum.toFixed(2)).css('text-align','right'));
     
     $(el).off('click').on('click', function () { $(this).find('ul').toggle(); })
         .append($('<ul>').append('<li>')
@@ -41,7 +43,7 @@ function fillTransactions(el) {
 
 var items = stash.get('items');
 function getTransactions(el) {
-    if (!items && navigator.onLine) ItemTable.orderByDescending('date').read().then( function (t) {
+    if (!items && navigator.onLine) ItemTable.orderByDescending('date').take(1000).read().then( function (t) {
         items=t;
         stash.set('items', items);
         fillTransactions(el);
@@ -54,10 +56,10 @@ function refreshTotals() {
     if (!users) users = stash.get('users');
     if (users) {
         var listItems = $.map(users, function (user) {
-            return $('<li>').attr('id', user.id).css('cursor', 'pointer')
+            return $('<li>').attr('id', user.id).css('cursor','pointer')
                 .on('click', function(){ getTransactions(this); })
-                .append($('<div>').css('float', 'left').append(user.name))
-                .append($('<div>').css('float', 'right').append("&euro; " + user.total.toFixed(2)));
+                .append($('<div>').css('float','left').append(user.name))
+                .append($('<div class="currency" />').css('float','right').css('width','80px').append(user.total.toFixed(2)));
         });
         $('#todo-items').empty().append(listItems).toggle(listItems.length > 0);
     }
@@ -91,19 +93,23 @@ var boodschappen = 'boodschappen';  // name stash store (renamed after login)
 
 function persistCachedItems() {
     var r = stash.get(boodschappen);
-    if (r && navigator.onLine && r.length > 0) {
-        console.log('boodschappen: '+JSON.stringify(r));
-        ItemTable.insert(r.pop()).then(function () {
-            stash.set(boodschappen, r);
+    if (navigator.onLine) {
+        if (r && r.length > 0) {
             console.log('boodschappen: '+JSON.stringify(r));
-            items = null;   // delete cached transaction history
-            stash.cut('items');
-            $('#summary').html('<strong style="color:green">De boodschap is opgeslagen</strong>').show();
-            if (r.length > 0) persistCachedItems();
-            else {
-                resetForm();
-            }
-         }, handleError);
+            ItemTable.insert(r.pop()).then(function () {
+                stash.set(boodschappen, r);
+                console.log('boodschappen: '+JSON.stringify(r));
+                items = null;   // delete cached transaction history
+                stash.cut('items');
+                $('#summary').html('<strong style="color:green">De boodschap is opgeslagen</strong>').show();
+                if (r.length > 0) persistCachedItems();
+                else getUsers();
+             }, handleError);
+        }
+    } else { // offline
+        refreshTotals();
+        fillTransactions();
+        resetForm();
     }
 }
 
@@ -112,7 +118,14 @@ function persist(item) {
     if (!r) r = [];
     r.push(item);
     stash.set(boodschappen, r);
+    
+    users.forEach(function(user){
+        if (user.id == item.userId) user.total += item.amount;
+        if (item.users.indexOf(user.id) > -1) user.total -= item.amount / item.users.split(',').length;
+    });
+    
     persistCachedItems();
+    
     /*
     console.log('boodschappen: '+JSON.stringify(r));
     if (navigator.onLine) ItemTable.insert(item).then(
@@ -172,8 +185,13 @@ function refreshAuthDisplay() {
         client.currentUser = JSON.parse(sessionStorage.loggedInUser);
         $("#logged-out").toggle(false);
         
-        // rename stash store
+        // rename stash store and clear stashed items not ours
         boodschappen = client.currentUser.userId;
+        if (!stash.get(boodschappen)) {
+            //stash.cutAll();
+            stash.cut('users');
+            stash.cut('items');
+        }
         
         getUsers();
     } else {
@@ -186,7 +204,9 @@ function refreshAuthDisplay() {
             sessionStorage.loggedInUser = JSON.stringify(client.currentUser);
 
             // register user
-            userTable.insert({ id: client.currentUser.userId }).then(getUsers, handleError);
+            userTable.insert({ id: client.currentUser.userId })
+                .then(getUsers, handleError);
+            
             //$("#login-name").text(client.currentUser.userId);
         }
     }
@@ -226,7 +246,7 @@ function resetForm() {
 }
 
 function updateIndicator() {
-	// Show a different icon based on offline/online
+	// based on offline/online
     if(navigator.onLine) {
         $('body').css('background-color', '#e0e0e0');
         if (client.currentUser) persistCachedItems();
