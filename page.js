@@ -188,10 +188,10 @@ function refreshAuthDisplay() {
         // rename stash store and clear stashed items not ours
         boodschappen = client.currentUser.userId;
         if (!stash.get(boodschappen)) {
-            //stash.cutAll();
+            //stash.cutAll(); // gooi je dan ook de stashed data van andere apps met stash.js weg?
             stash.cut('users');
             stash.cut('items');
-        }
+        } //else checkStash();
         
         getUsers();
     } else {
@@ -205,7 +205,7 @@ function refreshAuthDisplay() {
 
             // register user
             userTable.insert({ id: client.currentUser.userId })
-                .then(getUsers, handleError);
+                .then(refreshAuthDisplay, handleError);
             
             //$("#login-name").text(client.currentUser.userId);
         }
@@ -251,28 +251,39 @@ function checkStash() {
         if (items && items.length < results.totalCount) {
             items = null;
             stash.cut('items');
-            users = null;
-            stash.cut('users');
         }
-    });
+    }, handleError);
     userTable.take(0).includeTotalCount().read().then(function (results) {
         if (users && users.length < results.totalCount) {
             users = null;
-            stash.cut('users');            
+            stash.cut('users');
+            
+            resetForm();
         }
-    });
+    }, handleError);
 }
 
+var retries = 0;
 function updateIndicator() {
 	// based on offline/online
     if(navigator.onLine) {
-        $('body').css('background-color', '#e0e0e0');
-        if (client.currentUser) {
-            checkStash();
-            setTimeout(persistCachedItems, 2000);
-        }
+        retries++;
+        userTable.take(0).read().then(() => {
+            clearTimeout();
+            retries = 0;
+            $('body').css('background-color', '#e0e0e0');
+            if (client.currentUser) {
+                checkStash();
+                persistCachedItems();
+            }
+        }, (e) => {
+            setTimeout(updateIndicator, 200 * retries);
+            handleError(e);
+        });
     } else {
         $('body').css('background-color', 'mistyrose');
+        clearTimeout();
+        retries = 0;
     }
 }
 
@@ -291,8 +302,6 @@ $(function () {
     $('#summary').html('<strong>Log in om het boodschappenbedrag op te slaan</strong>');
 
     refreshAuthDisplay();
-    
-    checkStash();
 });
 
 function getTodaysDate(el) {
