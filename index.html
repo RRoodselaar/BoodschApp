@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <meta name='viewport' content='width=device-width' />
+    <title>DigiClowns's BoodschAppen</title>
+    <link rel='stylesheet' href='styles.css' />
+    <!--[if lt IE 9]><script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.6.1/html5shiv.js"></script><![endif]-->
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="/favicon.ico" type="image/ico" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <link rel="apple-touch-icon-precomposed" href="/favicon.png" />
+</head>
+<body>
+    <div id='wrapper'>
+        <article>
+            <header>
+                <h2>DigiClowns</h2>
+                <h1>Boodsch Appen</h1>
+                <div id="logged-in">
+                    Ingelogd <span id="login-name"></span>
+                    <button id='log-out' class='text'>Log out</button>
+                </div>
+                <div id="logged-out">
+                    Niet ingelogd
+                    <button class='text'>Log in</button>
+                </div>
+                <form id='add-item'>
+                    <button type='submit'>Verreken</button>
+                    <div>
+                        <input type='tel' id='new-item-date' pattern="(\d{1,2}[\-]\d{1,2}[\-]\d{4})" placeholder='dag-maand-jaar' onfocus='if(this.value=="")getTodaysDate(this);' />
+                        <input type='number' id='new-item-amount' pattern="(\d?[\.]\d{1,2})" step="0.01" placeholder='Bedrag (---,--)' min="0.01" required />
+                        <input type='text' id='new-item-text' placeholder='Beschrijving' autocomplete="on" required />
+                    </div>
+                    <p>Verdeel over:</p>
+                    <ul></ul>
+                </form>
+            </header>
+
+            <ul id='todo-items'></ul>
+            <p id='summary'>Loading...</p>
+        </article>
+
+        <footer>
+            <ul id='errorlog'></ul>
+        </footer>
+    </div>
+
+    <script src='https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.9.1.min.js'></script>
+    <script src="http://ajax.aspnetcdn.com/ajax/mobileservices/MobileServices.Web-1.2.7.min.js"></script>
+    <script src='page.js?v=7'></script>
+</body>
+</html>
