@@ -272,13 +272,11 @@ function updateIndicator() {
             clearTimeout();
             retries = 0;
             $('body').css('background-color', '#e0e0e0');
-            if (client.currentUser) {
-                checkStash();
-                persistCachedItems();
-            }
+            checkStash();
+            persistCachedItems();
         }, (e) => {
             setTimeout(updateIndicator, 200 * retries);
-            handleError(e);
+            //handleError(e);
         });
     } else {
         $('body').css('background-color', 'mistyrose');
@@ -292,7 +290,7 @@ $(function () {
     // Update the online status icon based on connectivity
     window.addEventListener('online',  updateIndicator);
     window.addEventListener('offline', updateIndicator);
-    updateIndicator();
+    if (client.currentUser) updateIndicator();
     
     $("#add-item").find("input, button").attr("disabled", true);
     
