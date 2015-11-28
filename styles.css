@@ -49,6 +49,7 @@ font-size: 20px; }
 height: 40px; border-radius: 4px }
 
 /* List of items */
+<<<<<<< HEAD
 #todo-items li { list-style-type: none; display: block; overflow: hidden; width: 100%; padding: 0 5px; text-align: justify; border-bottom: 1px solid #dadada }
 #todo-items li li { padding: 0 }
 
@@ -58,6 +59,16 @@ height: 40px; border-radius: 4px }
 
 .currency { text-align: right }
 .currency:before { content: '\20ac '; float: left }
+=======
+#todo-items li { list-style-type: none; display: block; overflow: hidden; width: 100%; padding: 0 5px; text-align: justify; border-bottom: 1px 
+
+solid #dadada;  }
+#todo-items li span { display: inline-block }
+.item-complete { float: left; margin: 0 8px 0 15px; height: 100% }
+.item-delete { float: right; margin: 5px; margin-right: 15px; height: 26px 
+
+}
+>>>>>>> fbf971d96ea0e336b23a372044e48f8c0832c687
 
 /* Textboxes in list of items */
 #todo-items li div { overflow: hidden; padding: 5px 2px }
