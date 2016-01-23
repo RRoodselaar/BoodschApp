@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html>
+<html manifest="manifest.appcache">
 <head>
     <meta charset='utf-8' />
     <meta name='viewport' content='width=device-width' />
@@ -15,6 +15,9 @@
     <div id='wrapper'>
         <article>
             <header>
+                <div class="ribbon">
+                  <a href="https://github.com/RRoodselaar/BoodschApp/tree/master">Offline ready!</a>
+                </div>
                 <h2>DigiClowns</h2>
                 <h1>Boodsch Appen</h1>
                 <div id="logged-in">
@@ -23,7 +26,7 @@
                 </div>
                 <div id="logged-out">
                     Niet ingelogd
-                    <button class='text'>Log in</button>
+                    <button class='text'><img src="fblogin.png" alt="Log in" title="Facebook log in" /></button>
                 </div>
                 <form id='add-item'>
                     <button type='submit'>Verreken</button>
@@ -46,8 +49,11 @@
         </footer>
     </div>
 
-    <script src='https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.9.1.min.js'></script>
-    <script src="http://ajax.aspnetcdn.com/ajax/mobileservices/MobileServices.Web-1.2.7.min.js"></script>
-    <script src='page.js?v=7'></script>
+    <script src='jquery-2.0.0.min.js'></script>
+    <script src="MobileServices.Web-1.2.7.min.js"></script>
+    <script src="stash.min.js"></script>
+    <script src='config.js'></script>
+    <script src='page.js'></script>
+    <!--script src='appcache.js'></script-->
 </body>
 </html>

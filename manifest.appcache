@@ -1,0 +1,18 @@
+CACHE MANIFEST
+# 20-01-2015
+
+styles.css
+#https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.9.1.min.js
+jquery-2.0.0.min.js
+#http://ajax.aspnetcdn.com/ajax/mobileservices/MobileServices.Web-1.2.7.min.js
+MobileServices.Web-1.2.7.min.js
+#//rezitech.github.com/stash/stash.min.js
+stash.min.js
+config.js
+page.js
+#appcache.js
+fblogin.png
+favicon.ico
+
+NETWORK:
+*

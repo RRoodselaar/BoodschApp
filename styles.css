@@ -27,36 +27,43 @@ button.text:hover { cursor: pointer; background: none }
 
 /* Main page structure and masthead style */
 #wrapper { max-width: 800px; margin: auto; padding: 20px; }
-article { background-color: white; box-shadow: 0 0 12px rgba(0, 0, 0, 
+article { overflow: hidden; position: relative; background-color: white; box-shadow: 0 0 12px rgba(0, 0, 0, 
 
 0.75); border-radius: 10px; }
-header { background-color: #71BCFA;padding: 20px; border-top-left-radius: 
-
-10px; border-top-right-radius: 10px; }
+header { background-color: #71BCFA;padding: 20px; border-top-left-radius: 10px; border-top-right-radius: 10px; }
 header h1 { text-transform: uppercase; font-weight: normal; color: 
 
 #545353; font-size: 28px; }
-header h2 { text-transform: uppercase; font-weight: normal; color: white; 
-
-font-size: 20px; }
+header h2 { text-transform: uppercase; font-weight: normal; color: white; font-size: 20px; }
 #summary { text-align: center; padding: 8px 0; }
 
 /* "Add new" form */
 #add-item { overflow: hidden; margin: 17px 0 5px 0; font-size: 1.1em }
 #add-item div { overflow: hidden }
-#add-item button { float: right; margin-left: 10px; padding: 0 10px; 
+#add-item button { float: right; margin-left: 10px; padding: 0 10px; height: 40px; border-radius: 4px }
 
-height: 40px; border-radius: 4px }
+.ribbon { background-color: #a00; overflow: hidden; white-space: nowrap;   position: absolute;
+  right: -60px; top: 30px;
+  -webkit-transform: rotate(45deg);
+     -moz-transform: rotate(45deg);
+      -ms-transform: rotate(45deg);
+       -o-transform: rotate(45deg);
+          transform: rotate(45deg);
+  -webkit-box-shadow: 0 0 10px #888;
+     -moz-box-shadow: 0 0 10px #888;
+          box-shadow: 0 0 10px #888;}
+.ribbon a { border: 1px solid #faa; color: #fff; display: block; font: bold 81.25% 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 1px 0; padding: 10px 50px; text-align: center; text-decoration: none; font-size: 20px; text-shadow: 0 0 5px #444; }
 
 /* List of items */
-#todo-items li { list-style-type: none; display: block; overflow: hidden; width: 100%; padding: 0 5px; text-align: justify; border-bottom: 1px 
+#todo-items li { list-style-type: none; display: block; overflow: hidden; width: 100%; padding: 0 5px; text-align: justify; border-bottom: 1px solid #dadada }
+#todo-items li li { padding: 0 }
 
-solid #dadada;  }
 #todo-items li span { display: inline-block }
 .item-complete { float: left; margin: 0 8px 0 15px; height: 100% }
-.item-delete { float: right; margin: 5px; margin-right: 15px; height: 26px 
+.item-delete { float: right; margin: 5px; margin-right: 15px; height: 26px }
 
-}
+.currency { text-align: right }
+.currency:before { content: '\20ac '; float: left }
 
 /* Textboxes in list of items */
 #todo-items li div { overflow: hidden; padding: 5px 2px }
