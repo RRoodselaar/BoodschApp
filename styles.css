@@ -3,10 +3,8 @@
 
 padding: 0; }
 body { font-family: Arial, Helvetica; background-color: #e0e0e0; }
-button { height: 40px; border: 1px solid #999; color: #555; background-
-
-color: #F4F4FA; padding: 0 10px; }
-button:not([disabled]):hover { background-color: white; }
+button { height: 40px; border: 1px solid #999; color: #555; background-color: #F4F4FA; padding: 0 10px; }
+button:not([disabled]):hover, button:not([disabled]):active { background-color: white; }
 input { height: 40px; margin: 0 10px 10px 0; padding: 0 10px; border: 1px 
 
 solid #999; font-size: 1em; border-radius: 4px; }
@@ -20,9 +18,7 @@ input[type=tel], input[type=number], input[type=date] { text-align:right;
 
 max-width: 150px; width: 100% }
 
-button.text { border: none; padding: 0; margin: 0; background: none; 
-
-text-decoration: underline; font: inherit }
+button.text { border: none; padding: 0; margin: 0; background: none; text-decoration: underline; font: inherit }
 button.text:hover { cursor: pointer; background: none }
 
 /* Main page structure and masthead style */

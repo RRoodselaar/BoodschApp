@@ -3,6 +3,8 @@ window.applicationCache.addEventListener('updateready', function() {
     location.reload();
 }, false);
 
+var boodschappen = 'boodschappen';  // name stash store (renamed after login)
+
 function fillTransactions(el) {
     var uId = $(el).attr('id');
     var sum = 0.0;
@@ -41,7 +43,7 @@ function fillTransactions(el) {
         .append(row).append(totalrow));
 }    
 
-var items = stash.get('items');
+var items;
 function getTransactions(el) {
     if (!items && navigator.onLine) itemTable.orderByDescending('date').take(1000).read().then( function (t) {
         items=t;
@@ -89,8 +91,6 @@ function compare(users, items) {
     $('#todo-items').empty().append(us).toggle(us.length > 0);
 */}
 
-var boodschappen = 'boodschappen';  // name stash store (renamed after login)
-
 function persistCachedItems() {
     var r = stash.get(boodschappen);
     if (navigator.onLine) {
@@ -98,7 +98,7 @@ function persistCachedItems() {
             console.log('boodschappen: '+JSON.stringify(r));
             itemTable.insert(r.pop()).then(function () {
                 stash.set(boodschappen, r);
-                console.log('boodschappen: '+JSON.stringify(r));
+                //console.log('boodschappen: '+JSON.stringify(r));
                 items = null;   // delete cached transaction history
                 stash.cut('items');
                 $('#summary').html('<strong style="color:green">De boodschap is opgeslagen</strong>').show();
@@ -161,7 +161,8 @@ $('#add-item').submit(function (evt) {
     var boodschap = { date: datum, amount: itemAmount, text: itemText, users: JSON.stringify(us) };
     persist(boodschap);
 
-    datebox.focus();
+    textbox.val(''); amountbox.val('');
+    datebox.val('').focus();
     evt.preventDefault();
 });
 
@@ -191,7 +192,7 @@ function refreshAuthDisplay() {
             //stash.cutAll(); // gooi je dan ook de stashed data van andere apps met stash.js weg?
             stash.cut('users');
             stash.cut('items');
-        } //else checkStash();
+        } else checkStash();
         
         getUsers();
     } else {
@@ -245,9 +246,12 @@ function resetForm() {
     refreshTotals();
 }
 
-function checkStash() {
-    // is the stash up to date?
+function checkStash() {   
+    items = stash.get('items');
+
+     // is the stash up to date?
     itemTable.take(0).includeTotalCount().read().then(function (results) {
+        $('#summary').html('item count:'+results.totalCount+'; items in stash:'+items.length);
         if (items && items.length < results.totalCount) {
             items = null;
             stash.cut('items');
