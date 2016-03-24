@@ -192,7 +192,7 @@ function refreshAuthDisplay() {
             //stash.cutAll(); // gooi je dan ook de stashed data van andere apps met stash.js weg?
             stash.cut('users');
             stash.cut('items');
-        } else checkStash();
+        } else updateIndicator();//checkStash();
         
         getUsers();
     } else {
@@ -251,7 +251,7 @@ function checkStash() {
 
      // is the stash up to date?
     itemTable.take(0).includeTotalCount().read().then(function (results) {
-        $('#summary').html('item count:'+results.totalCount+'; items in stash:'+items.length);
+        //$('#summary').html('item count:'+results.totalCount+'; items in stash:'+items.length);
         if (items && items.length < results.totalCount) {
             items = null;
             stash.cut('items');
@@ -323,6 +323,7 @@ function checkUsers() {
 
 function handleError(error) {
     var text = error + (error.request ? ' - ' + error.request.status : '');
-    $('#errorlog').append($('<li>').text(text));
+    //$('#errorlog').append($('<li>').text(text));
+    console.error(text);
     resetForm();
 }
