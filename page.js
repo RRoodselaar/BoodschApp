@@ -54,7 +54,24 @@ function getTransactions(el) {
 }
 
 function refreshTotals() {
-    //*
+    /*
+    if (navigator.onLine) {
+        client.invokeApi("userTotals", {
+            body: null,
+            method: "get"
+        }).done((us) => {
+            users = us.result;
+            if (users) {
+            var listItems = $.map(users, function (user) {
+                return $('<li>').attr('id', user.id).css('cursor','pointer')
+                    .on('click', function(){ getTransactions(this); })
+                    .append($('<div>').css('float','left').append(user.name))
+                    .append($('<div class="currency" />').css('float','right').css('width','80px').append(user.total.toFixed(2)));
+            });
+            $('#todo-items').empty().append(listItems).toggle(listItems.length > 0);
+        }
+        });
+    }*/
     if (!users) users = stash.get('users');
     if (users) {
         var listItems = $.map(users, function (user) {
